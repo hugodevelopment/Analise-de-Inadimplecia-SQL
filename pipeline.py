@@ -18,15 +18,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+"Aqui é onde será criado nosso banco de dados com os bancos"
 DB_PATH = "data/finbank.db"
 
 
+"Aqui ele faz a conexão do banco de dados com SQLITE3"
 def conectar():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
-
+"Aqui ele conecta os arquivos csvs criados no generate data.py, no entano no aquivo bronze sql ele verifica se essas arquivos existem e criam a tabela caso não"
 def carregar_bronze(conn):
     """Ingere os CSVs na camada Bronze."""
     logger.info("Iniciando camada Bronze...")
@@ -69,6 +71,7 @@ def executar_pipeline():
 
     # Silver
     logger.info("Iniciando camada Silver...")
+    #Aaui ele verifica a a camada Silver, no entanto, ele valida antes se as tabelas ja existem
     conn.execute("DROP TABLE IF EXISTS silver_clientes")
     conn.execute("DROP TABLE IF EXISTS silver_emprestimos")
     conn.execute("DROP TABLE IF EXISTS silver_pagamentos")
@@ -81,6 +84,7 @@ def executar_pipeline():
 
     # Gold
     logger.info("Iniciando camada Gold...")
+     #Aaui ele verifica a camada Gold, no entanto, ele valida antes se as tabelas ja existem usando o for
     for view in ["gold_inadimplencia_por_estado","gold_evolucao_inadimplencia",
                  "gold_ranking_risco_clientes","gold_risco_por_score",
                  "gold_alerta_risco_iminente"]:
@@ -90,7 +94,9 @@ def executar_pipeline():
 
     # Preview
     logger.info("─" * 50)
+    # Aqui ele cria a view com as metricas do gold
     logger.info("Preview — Inadimplência por Estado (Top 5):")
+    # Aqui ele transformas as colunas da tabela em sql em tabelas em csv
     df = pd.read_sql("""
         SELECT estado, total_emprestimos, inadimplentes,
                taxa_inadimplencia_pct, valor_em_risco
