@@ -28,10 +28,11 @@ def conectar():
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
-"Aqui ele conecta os arquivos csvs criados no generate data.py, no entano no aquivo bronze sql ele verifica se essas arquivos existem e criam a tabela caso não"
+"Aqui ele conecta os arquivos csvs criados no generate data.py, no entanto no aquivo bronze sql ele verifica se essas arquivos existem e criam a tabela caso não"
 def carregar_bronze(conn):
     """Ingere os CSVs na camada Bronze."""
     logger.info("Iniciando camada Bronze...")
+    "cria um dicionario tabelas onde os dados gerados no generate_data.py se tornam as tabelas sql"
     tabelas = {
         "bronze_clientes":      "data/clientes.csv",
         "bronze_emprestimos":   "data/emprestimos.csv",
@@ -58,7 +59,7 @@ def executar_sql(conn, caminho):
                     logger.warning(f"SQL ignorado: {e}")
     conn.commit()
 
-
+"Função principal do pipeline"
 def executar_pipeline():
     logger.info("─" * 50)
     logger.info("FinBank Risk Analysis — Pipeline Medallion")
