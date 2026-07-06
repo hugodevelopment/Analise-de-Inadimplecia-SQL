@@ -11,6 +11,9 @@ import pandas as pd
 import logging
 import sys
 
+import os
+import generate_data
+
 logging.basicConfig(
     level   = logging.INFO,
     format  = "%(asctime)s  %(levelname)-8s  %(message)s",
@@ -27,6 +30,21 @@ def conectar():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
+
+
+def verificar_dados():
+    """
+    Verifica se todos os CSVs necessários existem.
+    """
+
+    arquivos = [
+        "data/clientes.csv",
+        "data/emprestimos.csv",
+        "data/pagamentos.csv",
+        "data/eventos_risco.csv"
+    ]
+
+    return all(os.path.exists(arquivo) for arquivo in arquivos)
 
 "Aqui ele conecta os arquivos csvs criados no generate data.py, no entanto no aquivo bronze sql ele verifica se essas arquivos existem e criam a tabela caso não"
 def carregar_bronze(conn):
@@ -64,6 +82,18 @@ def executar_pipeline():
     logger.info("─" * 50)
     logger.info("FinBank Risk Analysis — Pipeline Medallion")
     logger.info("─" * 50)
+
+    if not verificar_dados():
+
+        logger.warning(
+            "Arquivos CSV não encontrados."
+        )
+
+        logger.info(
+            "Gerando dados sintéticos..."
+        )
+
+        generate_data.main()
 
     conn = conectar()
 
