@@ -12,7 +12,7 @@ import logging
 import sys
 
 import os
-import generate_data
+from data import generate_data
 
 logging.basicConfig(
     level   = logging.INFO,
@@ -52,11 +52,7 @@ def verificar_dados():
 
     return faltando
 
-
-
-
-  
-    #return all(os.path.exists(arquivo) for arquivo in arquivos if (not os.path.exists(arquivo) or os.path.getsize(arquivo) == 0))
+#return all(os.path.exists(arquivo) for arquivo in arquivos if (not os.path.exists(arquivo) or os.path.getsize(arquivo) == 0))
 
 "Aqui ele conecta os arquivos csvs criados no generate data.py, no entanto no aquivo bronze sql ele verifica se essas arquivos existem e criam a tabela caso não"
 def carregar_bronze(conn):
@@ -107,7 +103,7 @@ def executar_pipeline():
         "Gerando dados sintéticos..."
     )
 
-    generate_data.main()
+    generate_data.executar() 
 
     conn = conectar()
 
