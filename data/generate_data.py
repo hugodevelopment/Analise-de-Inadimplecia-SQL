@@ -40,6 +40,7 @@ def gerar_clientes():
     for i in range(1, N_CLIENTES + 1):
         # Score influencia renda e perfil de risco
         score = int(np.random.normal(620, 120))
+        #Utiliza a mesma variavel score para calcular o minimo entre 850 e score definido antes
         score = max(300, min(850, score))
 
         # Renda correlacionada com score
@@ -65,6 +66,7 @@ def gerar_emprestimos(clientes_df):
     emprestimos = []
 
     for i in range(1, N_EMPRESTIMOS + 1):
+        #Cliente recebe a primeira linha do dataframe clientes criando na função gerar_clientes()
         cliente = clientes_df.sample(1).iloc[0]
         score   = cliente['score_credito']
         renda   = cliente['renda_mensal']
@@ -86,11 +88,13 @@ def gerar_emprestimos(clientes_df):
 
         # Status influenciado pelo score
         prob_inadimplente = max(0.02, (700 - score) / 1000)
+        #Cria o status de forma aleatória, podendo ser ativo, quitado ou inadiplente
         status = np.random.choice(
             ['ATIVO', 'QUITADO', 'INADIMPLENTE'],
             p=[0.5, 0.5 - prob_inadimplente, prob_inadimplente]
-        )
-
+        ) 
+        
+    #Criando o dataframe final de emprestimos
         emprestimos.append({
             "emprestimo_id":  i,
             "cliente_id":     int(cliente['cliente_id']),
@@ -105,24 +109,38 @@ def gerar_emprestimos(clientes_df):
 
 
 # ── 3. Pagamentos ─────────────────────────────────────────────────────────────
+
+#O score de crédito influencia a probabilidade de atraso nas parcelas. 
+#Clientes com score mais baixo recebem uma probabilidade maior de atraso. 
+#Em seguida, o algoritmo realiza um sorteio aleatório e compara esse valor com a probabilidade calculada. 
+#Se o número sorteado estiver dentro dessa probabilidade, 
+#Considera que a parcela foi paga com atraso
+
 def gerar_pagamentos(emprestimos_df, clientes_df):
     print("Gerando pagamentos...")
     pagamentos = []
     pagamento_id = 1
 
+    #A varivável cliente idx recebe o id do cliente do dataframe clientes 
     clientes_idx = clientes_df.set_index('cliente_id')
 
+    # For para iterar sobre as linhas e index do dafraframe emprestimo
     for _, emp in emprestimos_df.iterrows():
         data_conc = datetime.strptime(emp['data_concessao'], "%Y-%m-%d")
+        # a variavel score recebe o score de cada cliente iteado no for no dataframe emprestimo
         score     = clientes_idx.loc[emp['cliente_id'], 'score_credito']
+        #calcula a probabilidade de atraso em relação ao score, quanto maior o score, menor a prob de atraso
         prob_atraso = max(0.05, (700 - score) / 800)
 
+    #  For que itera sobre o número de parcelas, cria o status baseado se atrasou ou não
         for parcela_num in range(1, emp['num_parcelas'] + 1):
             vencimento = data_conc + timedelta(days=30 * parcela_num)
 
             if vencimento > datetime.now():
                 break
-
+            # Simula o comportamento do cliente.
+            # Quanto maior a probabilidade de atraso,
+            # Maior a chance desta parcela ser marcada como atrasada.
             atrasou = random.random() < prob_atraso
 
             if not atrasou:
@@ -153,17 +171,23 @@ def gerar_pagamentos(emprestimos_df, clientes_df):
 
 
 # ── 4. Eventos de Risco ───────────────────────────────────────────────────────
+
+# Essa função classifica os eventos de risco considerandos os status do clientes como inadimplentes.
 def gerar_eventos_risco(emprestimos_df):
     print("Gerando eventos de risco...")
     eventos     = []
     evento_id   = 1
     inadimplentes = emprestimos_df[emprestimos_df['status'] == 'INADIMPLENTE']
 
+    # Simula a evolução dos eventos de cobrança
+    # para cada empréstimo inadimplente.
     for _, emp in inadimplentes.iterrows():
         data_base = datetime.strptime(emp['data_concessao'], "%Y-%m-%d")
         tipos = ['ATRASO_30', 'ATRASO_60', 'ATRASO_90', 'CALOTE']
 
+        # o Segundo for itera sobre o tipos e caso random seja maior que 30% preenche o dataframe
         for i, tipo in enumerate(tipos):
+           # Se o numero gerado aleatoriamente for maior que 0.3, ele gera o evento
             if random.random() > 0.3:
                 eventos.append({
                     "evento_id":     evento_id,
