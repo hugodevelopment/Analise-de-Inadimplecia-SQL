@@ -44,7 +44,19 @@ def verificar_dados():
         "data/eventos_risco.csv"
     ]
 
-    return all(os.path.exists(arquivo) for arquivo in arquivos)
+    faltando = [
+        arquivo
+        for arquivo in arquivos
+        if not os.path.exists(arquivo)
+    ]
+
+    return faltando
+
+
+
+
+  
+    #return all(os.path.exists(arquivo) for arquivo in arquivos if (not os.path.exists(arquivo) or os.path.getsize(arquivo) == 0))
 
 "Aqui ele conecta os arquivos csvs criados no generate data.py, no entanto no aquivo bronze sql ele verifica se essas arquivos existem e criam a tabela caso não"
 def carregar_bronze(conn):
@@ -83,17 +95,19 @@ def executar_pipeline():
     logger.info("FinBank Risk Analysis — Pipeline Medallion")
     logger.info("─" * 50)
 
-    if not verificar_dados():
+    
+    faltando = verificar_dados()
 
+    if faltando:
         logger.warning(
-            "Arquivos CSV não encontrados."
-        )
+        f"Arquivos ausentes: {faltando}"
+    )
 
         logger.info(
-            "Gerando dados sintéticos..."
-        )
+        "Gerando dados sintéticos..."
+    )
 
-        generate_data.main()
+    generate_data.main()
 
     conn = conectar()
 
