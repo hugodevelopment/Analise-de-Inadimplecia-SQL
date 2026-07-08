@@ -152,3 +152,75 @@ GROUP BY c.cliente_id, c.nome, c.score_credito,
          c.faixa_risco, c.estado,
          h.qtd_atrasos, h.maior_atraso, h.media_atraso
 ORDER BY score_risco_composto DESC;
+
+
+
+-- ── 6. Qual faixa de renda realiza mais empresitmos ?  ────────────────────────────────────────────
+CREATE VIEW IF NOT EXISTS gold_faixa_emprestimos AS
+WITH resumo_clientes_emprestimos AS (
+    SELECT
+        c.cliente_id,
+        c.faixa_renda,
+        -- Contamos quantos empréstimos cada cliente específico tem
+        COUNT(e.emprestimo_id) AS qtd_contratos
+    FROM silver_clientes c
+    -- IMPORTANTE: Usei 'silver_empresitmos' com o erro de digitação que vimos na sua barra lateral
+    LEFT JOIN silver_emprestimos e ON c.cliente_id = e.cliente_id
+    GROUP BY c.cliente_id, c.faixa_renda
+)
+SELECT
+    faixa_renda,
+    -- Total de pessoas físicas únicas na faixa
+    COUNT(DISTINCT cliente_id) AS total_clientes,
+    -- Soma de todos os contratos gerados por essas pessoas
+    SUM(qtd_contratos) AS total_emprestimos,
+    -- Média real de contratos por cliente nesta faixa de renda
+    ROUND(CAST(SUM(qtd_contratos) AS REAL) / COUNT(DISTINCT cliente_id), 2) AS media_emprestimos_por_cliente
+FROM resumo_clientes_emprestimos
+GROUP BY faixa_renda
+ORDER BY faixa_renda;
+
+
+CREATE VIEW IF NOT EXISTS gold_emprestimos_por_idade AS
+WITH idades_clientes AS (
+    SELECT 
+        cliente_id,
+        -- Calcula a idade baseada na data de nascimento cadastrada na Silver
+        (CAST(strftime('%Y', 'now') AS INTEGER) - CAST(strftime('%Y', data_nascimento) AS INTEGER)) AS idade
+    FROM silver_clientes
+)
+SELECT 
+    i.idade,
+    COUNT(DISTINCT i.cliente_id) AS total_clientes,
+    COUNT(e.emprestimo_id) AS total_emprestimos,
+    -- Média de contratos por faixa etária
+    ROUND(CAST(COUNT(e.emprestimo_id) AS REAL) / COUNT(DISTINCT i.cliente_id), 2) AS media_emprestimos
+FROM idades_clientes i
+LEFT JOIN silver_emprestimos e ON i.cliente_id = e.cliente_id
+WHERE i.idade IS NOT NULL
+GROUP BY i.idade
+ORDER BY i.idade;
+
+
+CREATE VIEW gold_faixa_emprestimos AS
+WITH dados_base AS (
+    SELECT
+        c.faixa_renda,
+        COUNT(e.emprestimo_id) AS total_emprestimos,
+        SUM(CASE WHEN e.status = 'INADIMPLENTE' THEN 1 ELSE 0 END) AS total_inadimplentes
+    FROM silver_clientes c
+    LEFT JOIN silver_emprestimos e ON c.cliente_id = e.cliente_id
+    WHERE e.emprestimo_id IS NOT NULL
+    GROUP BY c.faixa_renda
+)
+SELECT 
+    faixa_renda,
+    total_emprestimos,
+    total_inadimplentes,
+    -- Agora sim podemos usar as colunas calculadas diretamente!
+    ROUND((total_inadimplentes * 100.0) / total_emprestimos, 2) AS taxa_inadimplencia_da_faixa_pct
+FROM dados_base
+ORDER BY faixa_renda;
+
+
+

@@ -10,6 +10,7 @@ import sqlite3
 import pandas as pd
 import logging
 import sys
+import numpy as np
 
 import os
 from data import generate_data
