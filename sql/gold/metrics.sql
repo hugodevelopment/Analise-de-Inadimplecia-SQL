@@ -83,8 +83,7 @@ SELECT
           / NULLIF(valor_total_emprestado, 0), 2)  AS pct_inadimplente
 FROM exposicao
 WHERE valor_inadimplente > 0
-ORDER BY ranking_exposicao
-LIMIT 5;
+ORDER BY ranking_exposicao;
 
 
 -- ── 4. Perfil de risco por faixa de score ────────────────────────────────────
@@ -107,8 +106,7 @@ SELECT
 FROM silver_clientes c
 JOIN silver_emprestimos e ON c.cliente_id = e.cliente_id
 GROUP BY c.faixa_risco
-ORDER BY score_medio DESC
-LIMIT 5;
+ORDER BY score_medio DESC;
 
 
 -- ── 5. Clientes em risco iminente ────────────────────────────────────────────
@@ -153,8 +151,7 @@ WHERE e.status = 'ATIVO'
 GROUP BY c.cliente_id, c.nome, c.score_credito,
          c.faixa_risco, c.estado,
          h.qtd_atrasos, h.maior_atraso, h.media_atraso
-ORDER BY score_risco_composto DESC
-LIMIT 5;
+ORDER BY score_risco_composto DESC;
 
 
 

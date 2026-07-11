@@ -50,7 +50,7 @@ def executar_predicao_risco(caminho_banco="finbank.db"):
     
     # 5. AVALIAÇÃO DO MODELO DE CALOTE
     predicoes = modelo_pd.predict(X_test)
-    probabilidades = modelo_pd.predict_proba(X_test)[:, 0]# Pega a probabilidade do calote acontecer
+    probabilidades = modelo_pd.predict_proba(X_test)[:, 1]# Pega a probabilidade do calote acontecer
     
     print("\n--- 📈 RELATÓRIO DE PERFORMANCE (PD) ---")
     print(classification_report(y_test, predicoes))
@@ -58,7 +58,10 @@ def executar_predicao_risco(caminho_banco="finbank.db"):
     
     # 6. ENGENHARIA DE RISCO FINAL: CALCULANDO O PARÂMETRO EAD
     # Para os clientes que o modelo calculou alto risco, aplicamos a exposição
-    df['probabilidade_default_pct'] = modelo_pd.predict_proba(X)[:, 0]* 100
+    df['probabilidade_default_pct'] = modelo_pd.predict_proba(X)[:, 1]* 100
+
+    print((df['probabilidade_default_pct']))
+
     df['perda_esperada_ead'] = df['valor_total_emprestado'] * (df['probabilidade_default_pct'] / 100)
 
     print("oi")
